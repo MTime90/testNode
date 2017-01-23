@@ -4,8 +4,6 @@ var formidable = require('formidable');
 var fs = require('fs');
 var path = require("path");
 
-var baseImagePath = __dirname + "\\image\\";
-
 // Add headers
 app.use(function (req, res, next) {
 
@@ -26,16 +24,14 @@ app.use(function (req, res, next) {
     next();
 });
 
-var urlMap = {
-    "http://127.0.0.1:8081/file/test1" : "pic1",
-    "http://127.0.0.1:8081/file/test2" : "pic2"
-};
+var urlArrary = new Array();
+var baseUrlOfPic = "http://127.0.0.1:8081/";
 
 function getBaseDir() {
     var now = new Date();
     var year = now.getFullYear();
     var month = now.getMonth() + 1;
-    return baseImagePath + year + "\\" + month;
+    return "image/" + year + "/" + month;
 }
 
 //递归创建目录 异步方法
@@ -90,27 +86,29 @@ app.get(/[image]+\/\d\d\d\d\/\d+\/\d+@\w+.\w+/, function(req, res) {
     res.sendFile(__dirname + "/" + req.path);
 });
 
-app.get('list.txt', function(req, res) {
-    console.log("get list request");
-    res.send(JSON.stringify(urlMap));
+app.get('/list', function(req, res) {
+    console.log("get pic url list");
+    res.send(JSON.stringify(urlArrary));
 });
 
 app.post('/file_upload', function (req, res) {
    debugger;
    var form = new formidable.IncomingForm();
-   form.uploadDir = __dirname + "\\defualt";
+   form.uploadDir = __dirname + "/image";
    form.keepExtensions = true;
 
    form.on('fileBegin', function(name, file) {
        //在这个时间触发后，文件已经被存储到文件系统中了。
        var now = new Date();
        file.name = now.getTime() + "@" + file.name;
-       file.path = baseImagePath + file.name;
-       var tPath = getBaseDir().toString();
+       file.path = __dirname + "/image/" + file.name;
+       var tPath = __dirname + "/" + getBaseDir().toString();
     // var tPath = "test\\test1";    
        //console.log(tPath);
        checkDirAndFile(tPath, function() {
-           file.path = tPath + "\\" + file.name;
+           file.path = tPath + "/" + file.name;
+           urlArrary.push(baseUrlOfPic + getBaseDir().toString() + "/" + file.name);
+           console.log(urlArrary);
        });
        //console.log("I'm on fileBegin " + JSON.stringify(file));
    });
